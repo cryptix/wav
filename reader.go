@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-const (
-	maxWavSize = 2 << 31
-)
-
 type WavReader struct {
 	input io.ReadSeeker
 	size  int64
@@ -33,10 +29,12 @@ func (wav WavReader) String() string {
 	msg += fmt.Sprintln("=================")
 	msg += fmt.Sprintf("File size         : %d bytes\n", wav.size)
 	msg += fmt.Sprintf("Canonical format  : %v\n", wav.canonical && !wav.extraChunk)
+	// chunk fmt
 	msg += fmt.Sprintf("Audio format      : %d\n", wav.chunkFmt.AudioFormat)
 	msg += fmt.Sprintf("Number of channels: %d\n", wav.chunkFmt.NumChannels)
 	msg += fmt.Sprintf("Sampling rate     : %d Hz\n", wav.chunkFmt.SampleFreq)
 	msg += fmt.Sprintf("Sample size       : %d bits\n", wav.chunkFmt.BitsPerSample)
+	// calculated
 	msg += fmt.Sprintf("Number of samples : %d\n", wav.numSamples)
 	msg += fmt.Sprintf("Sound size        : %d bytes\n", wav.dataBlocSize)
 	msg += fmt.Sprintf("Sound duration    : %v\n", wav.duration)
@@ -44,23 +42,8 @@ func (wav WavReader) String() string {
 	return msg
 }
 
-type riffHeader struct {
-	Ftype       [4]byte
-	ChunkSize   uint32
-	ChunkFormat [4]byte
-}
-
-type riffChunkFmt struct {
-	AudioFormat   uint16 // 1 = PCM not compressed
-	NumChannels   uint16
-	SampleFreq    uint32
-	BytesPerSec   uint32
-	BytesPerBloc  uint16
-	BitsPerSample uint16
-}
-
 func NewWavReader(rd io.ReadSeeker, size int64) (wav *WavReader, err error) {
-	if size > maxWavSize {
+	if size > WAVmaxSize {
 		err = fmt.Errorf("Input too large")
 		return
 	}
@@ -87,15 +70,15 @@ func (wav *WavReader) parseHeaders() (err error) {
 		return err
 	}
 
-	if string(wav.header.Ftype[:]) != "RIFF" {
+	if wav.header.Ftype != WAVriffType {
 		return fmt.Errorf("Not a RIFF file")
 	}
 
 	if wav.header.ChunkSize+8 != uint32(wav.size) {
-		return fmt.Errorf("Damaged file. Chunk size != file size.")
+		return fmt.Errorf("Damaged file. Chunk size(%d) != file size(%d).", wav.header.ChunkSize+8, wav.size)
 	}
 
-	if string(wav.header.ChunkFormat[:]) != "WAVE" {
+	if wav.header.ChunkFormat != WAVchunkFormat {
 		return fmt.Errorf("Not a WAVE file")
 	}
 
@@ -111,12 +94,12 @@ readLoop:
 		}
 
 		switch string(chunk[:4]) {
-		case "fmt ":
+		case WAVTokenFmt:
 			wav.canonical = chunkSize == 16 // canonical format if chunklen == 16
 			if err = wav.parseChunkFmt(); err != nil {
 				return err
 			}
-		case "data":
+		case WAVTokenData:
 			size, _ := wav.input.Seek(0, os.SEEK_CUR)
 			wav.firstSamplePos = uint32(size)
 			wav.dataBlocSize = uint32(chunkSize)
