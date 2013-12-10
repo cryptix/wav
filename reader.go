@@ -32,7 +32,7 @@ func (wav WavReader) String() string {
 	// chunk fmt
 	msg += fmt.Sprintf("Audio format      : %d\n", wav.chunkFmt.AudioFormat)
 	msg += fmt.Sprintf("Number of channels: %d\n", wav.chunkFmt.NumChannels)
-	msg += fmt.Sprintf("Sampling rate     : %d Hz\n", wav.chunkFmt.SampleFreq)
+	msg += fmt.Sprintf("Sampling rate     : %d Hz\n", wav.chunkFmt.SampleRate)
 	msg += fmt.Sprintf("Sample size       : %d bits\n", wav.chunkFmt.BitsPerSample)
 	// calculated
 	msg += fmt.Sprintf("Number of samples : %d\n", wav.numSamples)
@@ -43,7 +43,7 @@ func (wav WavReader) String() string {
 }
 
 func NewWavReader(rd io.ReadSeeker, size int64) (wav *WavReader, err error) {
-	if size > WAVmaxSize {
+	if size > maxSize {
 		err = fmt.Errorf("Input too large")
 		return
 	}
@@ -70,7 +70,7 @@ func (wav *WavReader) parseHeaders() (err error) {
 		return err
 	}
 
-	if wav.header.Ftype != WAVriffType {
+	if wav.header.Ftype != tokenRiff {
 		return fmt.Errorf("Not a RIFF file")
 	}
 
@@ -78,7 +78,7 @@ func (wav *WavReader) parseHeaders() (err error) {
 		return fmt.Errorf("Damaged file. Chunk size(%d) != file size(%d).", wav.header.ChunkSize+8, wav.size)
 	}
 
-	if wav.header.ChunkFormat != WAVchunkFormat {
+	if wav.header.ChunkFormat != tokenWaveFormat {
 		return fmt.Errorf("Not a WAVE file")
 	}
 
@@ -93,13 +93,13 @@ readLoop:
 			return err
 		}
 
-		switch string(chunk[:4]) {
-		case WAVTokenFmt:
+		switch chunk {
+		case tokenChunkFmt:
 			wav.canonical = chunkSize == 16 // canonical format if chunklen == 16
 			if err = wav.parseChunkFmt(); err != nil {
 				return err
 			}
-		case WAVTokenData:
+		case tokenData:
 			size, _ := wav.input.Seek(0, os.SEEK_CUR)
 			wav.firstSamplePos = uint32(size)
 			wav.dataBlocSize = uint32(chunkSize)
