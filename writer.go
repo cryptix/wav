@@ -11,7 +11,7 @@ type WavWriter struct {
 	output  io.WriteSeeker
 	options WavFile
 
-	samplesWritten int
+	samplesWritten int32
 	bytesWritten   int
 }
 
@@ -58,6 +58,12 @@ func (file WavFile) NewWriter(out io.WriteSeeker) (wr *WavWriter, err error) {
 	}
 	wr.bytesWritten += n
 
+	// leave space for the data sie
+	_, err = wr.output.Seek(4, os.SEEK_CUR)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
@@ -75,6 +81,9 @@ func (w *WavWriter) WriteSample(sample []byte) error {
 
 func (w *WavWriter) CloseFile() error {
 	_, err := w.output.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return err
+	}
 
 	header := riffHeader{
 		ChunkSize: uint32(w.bytesWritten + 4),
@@ -83,6 +92,20 @@ func (w *WavWriter) CloseFile() error {
 	copy(header.ChunkFormat[:], tokenWaveFormat[:])
 
 	err = binary.Write(w.output, binary.LittleEndian, header)
+	if err != nil {
+		return err
+	}
+
+	// write data chunk size
+	_, err = w.output.Seek(0x28, os.SEEK_SET)
+	if err != nil {
+		return err
+	}
+
+	// write chunk size
+	var dataSize int32
+	dataSize = w.samplesWritten * 4
+	binary.Write(w.output, binary.LittleEndian, dataSize)
 	if err != nil {
 		return err
 	}
