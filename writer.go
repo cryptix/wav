@@ -1,6 +1,7 @@
 package wav
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -10,6 +11,8 @@ import (
 type WavWriter struct {
 	output  io.WriteSeeker
 	options WavFile
+
+	samples bytes.Buffer
 
 	samplesWritten int32
 	bytesWritten   int
@@ -72,9 +75,12 @@ func (w *WavWriter) WriteSample(sample []byte) error {
 		return fmt.Errorf("Incorrect Sample Length %d", len(sample))
 	}
 
-	binary.Write(w.output, binary.LittleEndian, sample)
+	n, err := w.samples.Write(sample)
+	if err != nil {
+		return err
+	}
 	w.samplesWritten += 1
-	w.bytesWritten += int(w.options.SignificantBits) / 8
+	w.bytesWritten += n
 
 	return nil
 }
@@ -105,9 +111,17 @@ func (w *WavWriter) CloseFile() error {
 	// write chunk size
 	var dataSize int32
 	dataSize = w.samplesWritten * 4
-	binary.Write(w.output, binary.LittleEndian, dataSize)
+	err = binary.Write(w.output, binary.LittleEndian, dataSize)
 	if err != nil {
 		return err
+	}
+
+	// there must be a cleaner way to do this..
+	// then we could cleanup the whole header writing, too
+	sampleReader := bytes.NewReader(w.samples.Bytes())
+	n, err := io.Copy(w.output, sampleReader)
+	if n != int64(w.samples.Len()) {
+		panic("did nod copy enough.. WTF?")
 	}
 
 	return nil
