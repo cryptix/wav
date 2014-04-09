@@ -96,6 +96,10 @@ readLoop:
 
 		switch chunk {
 		case tokenChunkFmt:
+			// seek 4 bytes back because riffChunkFmt reads the chunkSize again
+			if _, err = wav.input.Seek(-4, os.SEEK_CUR); err != nil {
+				return err
+			}
 			wav.canonical = chunkSize == 16 // canonical format if chunklen == 16
 			if err = wav.parseChunkFmt(); err != nil {
 				return err
@@ -128,11 +132,6 @@ readLoop:
 // parseChunkFmt
 func (wav *WavReader) parseChunkFmt() (err error) {
 	wav.chunkFmt = &riffChunkFmt{}
-
-	// seek 4 bytes back because riffChunkFmt reads the chunkSize again (allready read in readLoop)
-	if _, err = wav.input.Seek(-4, os.SEEK_CUR); err != nil {
-		return err
-	}
 
 	if err = binary.Read(wav.input, binary.LittleEndian, wav.chunkFmt); err != nil {
 		return err
