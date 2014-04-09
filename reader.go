@@ -88,6 +88,7 @@ readLoop:
 		if err = binary.Read(wav.input, binary.BigEndian, &chunk); err != nil {
 			return err
 		}
+
 		// and it's size in bytes
 		if err = binary.Read(wav.input, binary.LittleEndian, &chunkSize); err != nil {
 			return err
@@ -127,6 +128,11 @@ readLoop:
 // parseChunkFmt
 func (wav *WavReader) parseChunkFmt() (err error) {
 	wav.chunkFmt = &riffChunkFmt{}
+
+	// seek 4 bytes back because riffChunkFmt reads the chunkSize again (allready read in readLoop)
+	if _, err = wav.input.Seek(-4, os.SEEK_CUR); err != nil {
+		return err
+	}
 
 	if err = binary.Read(wav.input, binary.LittleEndian, wav.chunkFmt); err != nil {
 		return err
