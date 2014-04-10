@@ -20,8 +20,10 @@ type WavReader struct {
 	firstSamplePos uint32
 	dataBlocSize   uint32
 	bytesPerSample uint32
-	numSamples     uint32
 	duration       time.Duration
+
+	samplesRead uint32
+	numSamples  uint32
 }
 
 func (wav WavReader) String() string {
@@ -53,6 +55,8 @@ func NewWavReader(rd io.ReadSeeker, size int64) (wav *WavReader, err error) {
 	wav.size = size
 
 	err = wav.parseHeaders()
+
+	wav.samplesRead = 0
 
 	return
 }
@@ -123,8 +127,9 @@ readLoop:
 		return fmt.Errorf("Only PCM (not compressed) format is supported.")
 	}
 
-	wav.numSamples = wav.dataBlocSize / uint32(wav.chunkFmt.BitsPerSample>>3)
-	wav.duration = time.Duration(float64(wav.dataBlocSize) / float64(wav.chunkFmt.BitsPerSample>>3))
+	wav.bytesPerSample = uint32(wav.chunkFmt.BitsPerSample / 8)
+	wav.numSamples = wav.dataBlocSize / wav.bytesPerSample
+	wav.duration = time.Duration(float64(wav.numSamples)/float64(wav.chunkFmt.SampleRate)) * time.Second
 
 	return nil
 }
@@ -150,4 +155,52 @@ func (wav *WavReader) parseChunkFmt() (err error) {
 	}
 
 	return nil
+}
+
+func (wav *WavReader) GetSampleCount() uint32 {
+	return wav.numSamples
+}
+
+func (wav *WavReader) ReadRawSample() ([]byte, error) {
+	if wav.samplesRead > wav.numSamples {
+		return nil, io.EOF
+	}
+
+	buf := make([]byte, wav.bytesPerSample)
+	n, err := wav.input.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	if n != int(wav.bytesPerSample) {
+		return nil, fmt.Errorf("Read %d bytes, should have read %d", n, wav.bytesPerSample)
+	}
+
+	wav.samplesRead += 1
+	// w.bytesWritten += n
+
+	return buf, nil
+}
+
+func (wav *WavReader) ReadSample() (n int32, err error) {
+	s, err := wav.ReadRawSample()
+	if err != nil {
+		return 0, err
+	}
+
+	switch wav.bytesPerSample {
+	case 1:
+		n = int32(s[0])
+	case 2:
+		n = int32(s[0]) + int32(s[1])<<8
+	case 3:
+		n = int32(s[0]) + int32(s[1])<<8 + int32(s[2])<<16
+	case 4:
+		n = int32(s[0]) + int32(s[1])<<8 + int32(s[2])<<16 + int32(s[3])<<24
+	default:
+		n = 0
+		err = fmt.Errorf("Unhandled bytesPerSample! b:%d", wav.bytesPerSample)
+	}
+
+	return
 }

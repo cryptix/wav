@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/cryptix/wav"
@@ -23,6 +24,18 @@ func main() {
 
 	fmt.Println("Hello, wav")
 	fmt.Println(wavReader)
+
+sampleLoop:
+	for {
+		s, err := wavReader.ReadRawSample()
+		if err == io.EOF {
+			break sampleLoop
+		} else if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("Sample: <%v>\n", s)
+	}
 }
 
 func checkErr(err error) {

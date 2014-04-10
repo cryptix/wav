@@ -6,3 +6,4 @@ wav
 
 ## Todo
 * Use `type WavFile` for Reader
+* Implement Stereo interleaving

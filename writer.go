@@ -61,7 +61,7 @@ func (file WavFile) NewWriter(out io.WriteSeeker) (wr *WavWriter, err error) {
 	}
 	wr.bytesWritten += n
 
-	// leave space for the data sie
+	// leave space for the data size
 	_, err = wr.output.Seek(4, os.SEEK_CUR)
 	if err != nil {
 		return
@@ -92,7 +92,7 @@ func (w *WavWriter) CloseFile() error {
 	}
 
 	header := riffHeader{
-		ChunkSize: uint32(w.bytesWritten + 4),
+		ChunkSize: uint32(w.bytesWritten + 8),
 	}
 	copy(header.Ftype[:], tokenRiff[:])
 	copy(header.ChunkFormat[:], tokenWaveFormat[:])
