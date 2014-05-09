@@ -1,7 +1,7 @@
 package wav
 
 import (
-	"bytes"
+	"bufio"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -10,10 +10,9 @@ import (
 
 // WavWriter encapsulates a io.WriteSeeker and supplies Functions for writing samples
 type WavWriter struct {
-	output  io.WriteSeeker
-	options WavFile
-
-	samples bytes.Buffer
+	output    io.WriteSeeker
+	options   WavFile
+	sampleBuf *bufio.Writer
 
 	samplesWritten int32
 	bytesWritten   int
@@ -28,6 +27,7 @@ func (file WavFile) NewWriter(out io.WriteSeeker) (wr *WavWriter, err error) {
 
 	wr = &WavWriter{}
 	wr.output = out
+	wr.sampleBuf = bufio.NewWriter(out)
 	wr.options = file
 
 	// write header when close to get correct number of samples
@@ -82,7 +82,7 @@ func (w *WavWriter) WriteSample(sample []byte) error {
 		return fmt.Errorf("incorrect Sample Length %d", len(sample))
 	}
 
-	n, err := w.samples.Write(sample)
+	n, err := w.sampleBuf.Write(sample)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (w *WavWriter) WriteSample(sample []byte) error {
 	return nil
 }
 
-// CloseFile corrects the header and writes out the samples buffer
+// CloseFile corrects the filesize information in the header
 func (w *WavWriter) CloseFile() error {
 	_, err := w.output.Seek(0, os.SEEK_SET)
 	if err != nil {
@@ -123,14 +123,6 @@ func (w *WavWriter) CloseFile() error {
 	err = binary.Write(w.output, binary.LittleEndian, dataSize)
 	if err != nil {
 		return err
-	}
-
-	// there must be a cleaner way to do this..
-	// then we could cleanup the whole header writing, too
-	sampleReader := bytes.NewReader(w.samples.Bytes())
-	n, err := io.Copy(w.output, sampleReader)
-	if n != int64(w.samples.Len()) {
-		panic("did nod copy enough.. WTF?")
 	}
 
 	return nil
