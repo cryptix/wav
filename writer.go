@@ -32,7 +32,10 @@ func (file WavFile) NewWriter(out io.WriteSeeker) (wr *WavWriter, err error) {
 
 	// write header when close to get correct number of samples
 	wr.samplesWritten = 0
-	wr.output.Seek(12, os.SEEK_SET)
+	_, err = wr.output.Seek(12, os.SEEK_SET)
+	if err != nil {
+		return
+	}
 
 	// fmt.Fprintf(wr.output, "%s", tokenChunkFmt)
 	n, err := wr.output.Write(tokenChunkFmt[:])
