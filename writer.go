@@ -75,8 +75,20 @@ func (file WavFile) NewWriter(out io.WriteSeeker) (wr *WavWriter, err error) {
 	return
 }
 
-// WriteSample writes a []byte array to the temp samples buffer
-// TODO write to file directly
+// WriteInt32 writes the sample to the file using the binary package
+func (w *WavWriter) WriteInt32(sample int32) error {
+	err := binary.Write(w.sampleBuf, binary.LittleEndian, sample)
+	if err != nil {
+		return err
+	}
+
+	w.samplesWritten++
+	w.bytesWritten += 4
+
+	return err
+}
+
+// WriteSample writes a []byte array to file without conversion
 func (w *WavWriter) WriteSample(sample []byte) error {
 	if len(sample)*8 != int(w.options.SignificantBits) {
 		return fmt.Errorf("incorrect Sample Length %d", len(sample))
