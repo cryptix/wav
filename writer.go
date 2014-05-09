@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+// WavWriter encapsulates a io.WriteSeeker and supplies Functions for writing samples
 type WavWriter struct {
 	output  io.WriteSeeker
 	options WavFile
@@ -18,9 +19,10 @@ type WavWriter struct {
 	bytesWritten   int
 }
 
+// NewWriter creates a new WaveWriter and writes the header to it
 func (file WavFile) NewWriter(out io.WriteSeeker) (wr *WavWriter, err error) {
 	if file.Channels != 1 {
-		err = fmt.Errorf("Sorry, only mono currently")
+		err = fmt.Errorf("sorry, only mono currently")
 		return
 	}
 
@@ -70,21 +72,25 @@ func (file WavFile) NewWriter(out io.WriteSeeker) (wr *WavWriter, err error) {
 	return
 }
 
+// WriteSample writes a []byte array to the temp samples buffer
+// TODO write to file directly
 func (w *WavWriter) WriteSample(sample []byte) error {
 	if len(sample)*8 != int(w.options.SignificantBits) {
-		return fmt.Errorf("Incorrect Sample Length %d", len(sample))
+		return fmt.Errorf("incorrect Sample Length %d", len(sample))
 	}
 
 	n, err := w.samples.Write(sample)
 	if err != nil {
 		return err
 	}
-	w.samplesWritten += 1
+
+	w.samplesWritten++
 	w.bytesWritten += n
 
 	return nil
 }
 
+// CloseFile corrects the header and writes out the samples buffer
 func (w *WavWriter) CloseFile() error {
 	_, err := w.output.Seek(0, os.SEEK_SET)
 	if err != nil {
