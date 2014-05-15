@@ -11,17 +11,8 @@ import (
 )
 
 const (
-	idxClk = 5
-	idxRst = 20
-
-	idxDout   = 17
-	idxEnable = 18
-	idxFreq   = 19
-)
-
-const (
-	bits = 32
-	rate = 48000
+	bits = 16
+	rate = 44100
 )
 
 func main() {
@@ -46,8 +37,8 @@ func main() {
 
 	var freq float64
 	freq = 0.0001
-	for n := 0; n < 2*rate; n += 1 {
-		y := int32(math.Pow(2, bits-1) * math.Sin(freq*float64(n)))
+	for n := 0; n < 0*rate; n += 1 {
+		y := int16(0.9 * math.Pow(2, bits-1) * math.Sin(freq*float64(n)))
 		freq += 0.000001
 
 		sampleBuf.Reset()
