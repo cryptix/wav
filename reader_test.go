@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestWavReader(t *testing.T) {
+func TestNewWavReader(t *testing.T) {
 	Convey("Parsing the header of an wav with 0 samples", t, func() {
 		wavData := []byte{
 			0x52, 0x49, 0x46, 0x46, // "RIFF"
@@ -53,17 +53,64 @@ func TestWavReader(t *testing.T) {
 		_, err := NewWavReader(wavFile, 99999999999999999)
 		So(err, ShouldEqual, ErrInputToLarge)
 	})
+}
 
-	Convey("Returning io.ErrUnexpectedEOF when the RIFFheader is too short", t, func() {
-		wavData := []byte{
-			0x52, 0x49, 0x46, 0x46, // "RIFF"
-			0x08, 0x00,
-		}
-		wavFile := bytes.NewReader(wavData)
+func TestParseHeaders(t *testing.T) {
+	Convey("Returning io.ErrUnexpectedEOF when the headers are too short", t, func() {
 
-		reader, err := NewWavReader(wavFile, int64(len(wavData)))
-		So(reader, ShouldBeNil)
-		So(err, ShouldResemble, io.ErrUnexpectedEOF)
+		Convey("when the RIFFheader is too short", func() {
+			wavData := []byte{
+				0x52, 0x49, 0x46, 0x46, // "RIFF"
+				0x08, 0x00,
+			}
+			wavFile := bytes.NewReader(wavData)
+
+			reader, err := NewWavReader(wavFile, int64(len(wavData)))
+			So(reader, ShouldBeNil)
+			So(err, ShouldResemble, io.ErrUnexpectedEOF)
+		})
+
+		Convey("when the chunkFmt is missing", func() {
+			wavData := []byte{
+				0x52, 0x49, 0x46, 0x46, // "RIFF"
+				0x04, 0x00, 0x00, 0x00, // chunkSize
+				0x57, 0x41, 0x56, 0x45, // "WAVE"
+			}
+			wavFile := bytes.NewReader(wavData)
+
+			reader, err := NewWavReader(wavFile, int64(len(wavData)))
+			So(reader, ShouldBeNil)
+			So(err, ShouldResemble, io.ErrUnexpectedEOF)
+		})
+
+		Convey("when the chunkFmt is too short", func() {
+			wavData := []byte{
+				0x52, 0x49, 0x46, 0x46, // "RIFF"
+				0x08, 0x00, 0x00, 0x00, // chunkSize
+				0x57, 0x41, 0x56, 0x45, // "WAVE"
+				0x66, 0x6d, 0x74, 0x20, // "fmt "
+			}
+			wavFile := bytes.NewReader(wavData)
+
+			reader, err := NewWavReader(wavFile, int64(len(wavData)))
+			So(reader, ShouldBeNil)
+			So(err, ShouldResemble, io.ErrUnexpectedEOF)
+		})
+
+		Convey("when the chunkFmt is too short", func() {
+			wavData := []byte{
+				0x52, 0x49, 0x46, 0x46, // "RIFF"
+				0x0a, 0x00, 0x00, 0x00, // chunkSize
+				0x57, 0x41, 0x56, 0x45, // "WAVE"
+				0x66, 0x6d, 0x74, 0x20, // "fmt "
+				0, 0,
+			}
+			wavFile := bytes.NewReader(wavData)
+
+			reader, err := NewWavReader(wavFile, int64(len(wavData)))
+			So(reader, ShouldBeNil)
+			So(err, ShouldResemble, io.ErrUnexpectedEOF)
+		})
 	})
 
 	Convey("Parsing the a corrupted RIFF header returns ErrNotRiff", t, func() {
@@ -97,15 +144,16 @@ func TestWavReader(t *testing.T) {
 	Convey("Parsing an incorrect WAVE token returns ErrNotWave", t, func() {
 		wavData := []byte{
 			0x52, 0x49, 0x46, 0x46, // "RIFF"
-			0x08, 0x00, 0x00, 0x00, // chunkSize
+			0x09, 0x00, 0x00, 0x00, // chunkSize
 			0x57, 0x42, 0x56, 0x45, // "WBVE"
 			0x66, 0x6d, 0x74, 0x20, // "fmt "
+			0,
 		}
 		wavFile := bytes.NewReader(wavData)
 
 		reader, err := NewWavReader(wavFile, int64(len(wavData)))
 		So(reader, ShouldBeNil)
-		So(err, ShouldResemble, ErrNotWave)
+		So(err, ShouldEqual, ErrNotWave)
 	})
 
 	Convey("Only uncompressed PCM is supported - ErrFormatNotSupported", t, func() {
@@ -131,6 +179,6 @@ func TestWavReader(t *testing.T) {
 
 		reader, err := NewWavReader(wavFile, int64(len(wavData)))
 		So(reader, ShouldBeNil)
-		So(err, ShouldResemble, ErrFormatNotSupported)
+		So(err, ShouldEqual, ErrFormatNotSupported)
 	})
 }

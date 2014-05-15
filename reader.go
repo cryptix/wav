@@ -91,12 +91,18 @@ func (wav *WavReader) parseHeaders() (err error) {
 readLoop:
 	for {
 		// Read next chunkID
-		if err = binary.Read(wav.input, binary.BigEndian, &chunk); err != nil {
+		err = binary.Read(wav.input, binary.BigEndian, &chunk)
+		if err == io.EOF {
+			return io.ErrUnexpectedEOF
+		} else if err != nil {
 			return err
 		}
 
 		// and it's size in bytes
-		if err = binary.Read(wav.input, binary.LittleEndian, &chunkSize); err != nil {
+		err = binary.Read(wav.input, binary.LittleEndian, &chunkSize)
+		if err == io.EOF {
+			return io.ErrUnexpectedEOF
+		} else if err != nil {
 			return err
 		}
 
