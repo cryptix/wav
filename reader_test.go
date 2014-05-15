@@ -2,6 +2,7 @@ package wav
 
 import (
 	"bytes"
+	"io"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
@@ -45,12 +46,24 @@ func TestWavReader(t *testing.T) {
 		})
 	})
 
-	Convey("Refusing to parse enourmes wav files", t, func() {
+	Convey("Refusing to parse enourmes wav files - returns ErrInputToLarge", t, func() {
 		wavData := []byte{}
 		wavFile := bytes.NewReader(wavData)
 
 		_, err := NewWavReader(wavFile, 99999999999999999)
 		So(err, ShouldEqual, ErrInputToLarge)
+	})
+
+	Convey("Returning io.ErrUnexpectedEOF when the RIFFheader is too short", t, func() {
+		wavData := []byte{
+			0x52, 0x49, 0x46, 0x46, // "RIFF"
+			0x08, 0x00,
+		}
+		wavFile := bytes.NewReader(wavData)
+
+		reader, err := NewWavReader(wavFile, int64(len(wavData)))
+		So(reader, ShouldBeNil)
+		So(err, ShouldResemble, io.ErrUnexpectedEOF)
 	})
 
 	Convey("Parsing the a corrupted RIFF header returns ErrNotRiff", t, func() {
