@@ -193,7 +193,6 @@ func (wav *WavReader) ReadRawSample() ([]byte, error) {
 	}
 
 	wav.samplesRead += 1
-	// w.bytesWritten += n
 
 	return buf, nil
 }
