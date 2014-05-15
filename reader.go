@@ -161,6 +161,14 @@ func (wav *WavReader) GetSampleCount() uint32 {
 	return wav.numSamples
 }
 
+func (w WavReader) GetWavFile() WavFile {
+	return WavFile{
+		SampleRate:      w.chunkFmt.SampleRate,
+		Channels:        w.chunkFmt.NumChannels,
+		SignificantBits: w.chunkFmt.BitsPerSample,
+	}
+}
+
 func (wav *WavReader) ReadRawSample() ([]byte, error) {
 	if wav.samplesRead > wav.numSamples {
 		return nil, io.EOF
