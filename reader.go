@@ -46,19 +46,21 @@ func (wav WavReader) String() string {
 
 func NewWavReader(rd io.ReadSeeker, size int64) (wav *WavReader, err error) {
 	if size > maxSize {
-		err = fmt.Errorf("Input too large")
-		return
+		return nil, ErrInputToLarge
 	}
 
-	wav = &WavReader{}
+	wav = new(WavReader)
 	wav.input = rd
 	wav.size = size
 
 	err = wav.parseHeaders()
+	if err != nil {
+		return nil, err
+	}
 
 	wav.samplesRead = 0
 
-	return
+	return wav, nil
 }
 
 func (wav *WavReader) parseHeaders() (err error) {
@@ -75,15 +77,15 @@ func (wav *WavReader) parseHeaders() (err error) {
 	}
 
 	if wav.header.Ftype != tokenRiff {
-		return fmt.Errorf("Not a RIFF file")
+		return ErrNotRiff
 	}
 
 	if wav.header.ChunkSize+8 != uint32(wav.size) {
-		return fmt.Errorf("Damaged file. Chunk size(%d) != file size(%d).", wav.header.ChunkSize+8, wav.size)
+		return ErrIncorrectChunkSize{wav.header.ChunkSize + 8, uint32(wav.size)}
 	}
 
 	if wav.header.ChunkFormat != tokenWaveFormat {
-		return fmt.Errorf("Not a WAVE file")
+		return ErrNotWave
 	}
 
 readLoop:

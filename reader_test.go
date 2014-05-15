@@ -9,7 +9,6 @@ import (
 
 func TestWavReader(t *testing.T) {
 	Convey("Parsing the header of an wav with 0 samples", t, func() {
-
 		wavData := []byte{
 			0x52, 0x49, 0x46, 0x46, // "RIFF"
 			0x24, 0x00, 0x00, 0x00, // chunkSize
@@ -37,12 +36,62 @@ func TestWavReader(t *testing.T) {
 			So(wavReader.GetSampleCount(), ShouldEqual, 0)
 		})
 
-		Convey("GetWavFile should return", func() {
+		Convey("GetWavFile should return the correct information", func() {
 			So(wavReader.GetWavFile(), ShouldResemble, WavFile{
 				SampleRate:      44100,
 				Channels:        1,
 				SignificantBits: 16,
 			})
 		})
+	})
+
+	Convey("Refusing to parse enourmes wav files", t, func() {
+		wavData := []byte{}
+		wavFile := bytes.NewReader(wavData)
+
+		_, err := NewWavReader(wavFile, 99999999999999999)
+		So(err, ShouldEqual, ErrInputToLarge)
+	})
+
+	Convey("Parsing the a corrupted RIFF header returns ErrNotRiff", t, func() {
+		wavData := []byte{
+			0x52, 0, 0x46, 0x46, // "R\0FF"
+			0x24, 0x00, 0x00, 0x00, // chunkSize
+			0x57, 0x41, 0x56, 0x45, // "WAVE"
+		}
+		wavFile := bytes.NewReader(wavData)
+
+		reader, err := NewWavReader(wavFile, int64(len(wavData)))
+		So(reader, ShouldBeNil)
+		So(err, ShouldEqual, ErrNotRiff)
+	})
+
+	Convey("Parsing an incorrect chunkSize returns ErrIncorrectChunkSize", t, func() {
+		wavData := []byte{
+			0x52, 0x49, 0x46, 0x46, // "RIFF"
+			0x00, 0x00, 0x00, 0x00, // chunkSize=0
+			0x57, 0x41, 0x56, 0x45, // "WAVE"
+			0x66, 0x6d, 0x74, 0x20, // "fmt "
+		}
+		wavFile := bytes.NewReader(wavData)
+
+		reader, err := NewWavReader(wavFile, int64(len(wavData)))
+		So(reader, ShouldBeNil)
+		So(err, ShouldResemble, ErrIncorrectChunkSize{8, 16})
+		So(err.Error(), ShouldEqual, "Incorrect ChunkSize. Got[8] Wanted[16]")
+	})
+
+	Convey("Parsing an incorrect WAVE token returns ErrNotWave", t, func() {
+		wavData := []byte{
+			0x52, 0x49, 0x46, 0x46, // "RIFF"
+			0x08, 0x00, 0x00, 0x00, // chunkSize
+			0x57, 0x42, 0x56, 0x45, // "WBVE"
+			0x66, 0x6d, 0x74, 0x20, // "fmt "
+		}
+		wavFile := bytes.NewReader(wavData)
+
+		reader, err := NewWavReader(wavFile, int64(len(wavData)))
+		So(reader, ShouldBeNil)
+		So(err, ShouldResemble, ErrNotWave)
 	})
 }
