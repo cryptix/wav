@@ -9,6 +9,8 @@ var (
 	ErrInputToLarge = errors.New("Input too large")
 	ErrNotRiff      = errors.New("Not a RIFF file")
 	ErrNotWave      = errors.New("Not a WAVE file")
+
+	ErrFormatNotSupported = errors.New("Format not supported - Only uncompressed PCM currently")
 )
 
 type ErrIncorrectChunkSize struct {

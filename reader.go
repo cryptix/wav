@@ -126,7 +126,7 @@ readLoop:
 
 	// Is audio supported ?
 	if wav.chunkFmt.AudioFormat != 1 {
-		return fmt.Errorf("Only PCM (not compressed) format is supported.")
+		return ErrFormatNotSupported
 	}
 
 	wav.bytesPerSample = uint32(wav.chunkFmt.BitsPerSample / 8)
