@@ -105,6 +105,15 @@ func (w *WavWriter) WriteSample(sample []byte) error {
 	return nil
 }
 
+// GetDumbWriter gives you a std io.Writer, starting from the first sample. usefull for piping data.
+func (w *WavWriter) GetDumbWriter() (wr io.Writer, countPtr *int32, err error) {
+	if w.samplesWritten != 0 {
+		return nil, nil, fmt.Errorf("Please only use this on its own")
+	}
+
+	return w.output, &w.samplesWritten, nil
+}
+
 // CloseFile corrects the filesize information in the header
 func (w *WavWriter) CloseFile() error {
 	_, err := w.output.Seek(0, os.SEEK_SET)

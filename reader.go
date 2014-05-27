@@ -177,6 +177,17 @@ func (w WavReader) GetWavFile() WavFile {
 	}
 }
 
+// GetDumbReader gives you a std io.Reader, starting from the first sample. usefull for piping data.
+func (wav WavReader) GetDumbReader() (r io.Reader, err error) {
+	// move reader to the first sample
+	_, err = wav.input.Seek(int64(wav.firstSamplePos), os.SEEK_SET)
+	if err != nil {
+		return nil, err
+	}
+
+	return wav.input, nil
+}
+
 func (wav *WavReader) ReadRawSample() ([]byte, error) {
 	if wav.samplesRead > wav.numSamples {
 		return nil, io.EOF
