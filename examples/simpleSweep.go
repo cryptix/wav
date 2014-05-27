@@ -1,17 +1,16 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
-	"github.com/cryptix/wav"
 	"math"
 	"os"
 	"time"
+
+	"github.com/cryptix/wav"
 )
 
 const (
-	bits = 16
+	bits = 32
 	rate = 44100
 )
 
@@ -30,21 +29,15 @@ func main() {
 	checkErr(err)
 	defer writer.CloseFile()
 
-	// sampleBuf := make([]byte, bits/8)
-	var sampleBuf bytes.Buffer
-
 	start := time.Now()
 
 	var freq float64
 	freq = 0.0001
-	for n := 0; n < 0*rate; n += 1 {
-		y := int16(0.9 * math.Pow(2, bits-1) * math.Sin(freq*float64(n)))
-		freq += 0.000001
+	for n := 0; n < 50*rate; n += 1 {
+		y := int32(0.8 * math.Pow(2, bits-1) * math.Sin(freq*float64(n)))
+		freq += 0.000002
 
-		sampleBuf.Reset()
-		binary.Write(&sampleBuf, binary.LittleEndian, y)
-
-		err = writer.WriteSample(sampleBuf.Bytes())
+		err = writer.WriteInt32(y)
 		checkErr(err)
 	}
 
