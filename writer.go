@@ -114,8 +114,8 @@ func (w *WavWriter) GetDumbWriter() (wr io.Writer, countPtr *int32, err error) {
 	return w.output, &w.samplesWritten, nil
 }
 
-// CloseFile corrects the filesize information in the header
-func (w *WavWriter) CloseFile() error {
+// Close corrects the filesize information in the header
+func (w *WavWriter) Close() error {
 	_, err := w.output.Seek(0, os.SEEK_SET)
 	if err != nil {
 		return err
