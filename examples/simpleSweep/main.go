@@ -27,7 +27,7 @@ func main() {
 
 	writer, err := meta.NewWriter(wavOut)
 	checkErr(err)
-	defer writer.CloseFile()
+	defer writer.Close()
 
 	start := time.Now()
 
