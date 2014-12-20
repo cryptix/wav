@@ -117,7 +117,7 @@ func (w *WavWriter) GetDumbWriter() (wr wavOutput, countPtr *int32, err error) {
 		return nil, nil, fmt.Errorf("Please only use this on its own")
 	}
 
-	return w.wavOutput, &w.samplesWritten, nil
+	return w, &w.samplesWritten, nil
 }
 
 // Close corrects the filesize information in the header
