@@ -39,9 +39,9 @@ func init() {
 	wavWithOneSample = b.Bytes()
 }
 
-func TestNewWavReader_inputTooLarge(t *testing.T) {
+func TestNewReader_inputTooLarge(t *testing.T) {
 	t.Parallel()
-	_, err := NewWavReader(
+	_, err := NewReader(
 		bytes.NewReader([]byte{}),
 		99999999999999999)
 	assert.Equal(t, ErrInputToLarge, err)
@@ -58,21 +58,21 @@ func TestParseHeaders_complete(t *testing.T) {
 	b.Write(testRiffChunkFmt)
 	b.Write([]byte{0x00, 0x00, 0x00, 0x00})
 	wavFile := bytes.NewReader(b.Bytes())
-	wavReader, err := NewWavReader(wavFile, int64(b.Len()))
+	wavReader, err := NewReader(wavFile, int64(b.Len()))
 	assert.Nil(t, err)
 	assert.Equal(t, 0, wavReader.GetSampleCount())
-	assert.Equal(t, WavFile{
+	assert.Equal(t, File{
 		SampleRate:      44100,
 		Channels:        1,
 		SignificantBits: 16,
-	}, wavReader.GetWavFile())
+	}, wavReader.GetFile())
 }
 
 func TestParseHeaders_tooShort(t *testing.T) {
 	t.Parallel()
 	wavData := append(riff, 0x08, 0x00)
 	wavFile := bytes.NewReader(wavData)
-	_, err := NewWavReader(wavFile, int64(len(wavData)))
+	_, err := NewReader(wavFile, int64(len(wavData)))
 	assert.NotNil(t, err)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 }
@@ -84,7 +84,7 @@ func TestParseHeaders_chunkFmtMissing(t *testing.T) {
 	b.Write([]byte{0x04, 0x00, 0x00, 0x00}) // chunkSize
 	b.Write(wave)
 	wavFile := bytes.NewReader(b.Bytes())
-	_, err := NewWavReader(wavFile, int64(b.Len()))
+	_, err := NewReader(wavFile, int64(b.Len()))
 	assert.NotNil(t, err)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 }
@@ -97,7 +97,7 @@ func TestParseHeaders_chunkFmtTooShort(t *testing.T) {
 	b.Write(wave)
 	b.Write(fmt20)
 	wavFile := bytes.NewReader(b.Bytes())
-	_, err := NewWavReader(wavFile, int64(b.Len()))
+	_, err := NewReader(wavFile, int64(b.Len()))
 	assert.NotNil(t, err)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 }
@@ -111,7 +111,7 @@ func TestParseHeaders_chunkFmtTooShort2(t *testing.T) {
 	b.Write(fmt20)
 	b.Write([]byte{0, 0})
 	wavFile := bytes.NewReader(b.Bytes())
-	_, err := NewWavReader(wavFile, int64(b.Len()))
+	_, err := NewReader(wavFile, int64(b.Len()))
 	assert.NotNil(t, err)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 }
@@ -123,7 +123,7 @@ func TestParseHeaders_corruptRiff(t *testing.T) {
 	b.Write(chunkSize24)
 	b.Write(wave)
 	wavFile := bytes.NewReader(b.Bytes())
-	_, err := NewWavReader(wavFile, int64(b.Len()))
+	_, err := NewReader(wavFile, int64(b.Len()))
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrNotRiff, err)
 }
@@ -136,7 +136,7 @@ func TestParseHeaders_chunkSizeNull(t *testing.T) {
 	b.Write(wave)
 	b.Write(fmt20)
 	wavFile := bytes.NewReader(b.Bytes())
-	_, err := NewWavReader(wavFile, int64(b.Len()))
+	_, err := NewReader(wavFile, int64(b.Len()))
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrIncorrectChunkSize{8, 16}, err, "bad error")
 	assert.EqualError(t, err, "Incorrect ChunkSize. Got[8] Wanted[16]")
@@ -151,7 +151,7 @@ func TestParseHeaders_notWave(t *testing.T) {
 	b.Write(fmt20)
 	b.Write([]byte{0})
 	wavFile := bytes.NewReader(b.Bytes())
-	_, err := NewWavReader(wavFile, int64(b.Len()))
+	_, err := NewReader(wavFile, int64(b.Len()))
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrNotWave, err)
 }
@@ -168,7 +168,7 @@ func TestParseHeaders_fmtNotSupported(t *testing.T) {
 	buf := b.Bytes()
 	buf[21] = 2 // change byte 5 of riffChunk
 	wavFile := bytes.NewReader(buf)
-	_, err := NewWavReader(wavFile, int64(b.Len()))
+	_, err := NewReader(wavFile, int64(b.Len()))
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrFormatNotSupported, err)
 }
@@ -176,7 +176,7 @@ func TestParseHeaders_fmtNotSupported(t *testing.T) {
 func TestReadSample_Raw(t *testing.T) {
 	t.Parallel()
 	wavFile := bytes.NewReader(wavWithOneSample)
-	wavReader, err := NewWavReader(wavFile, int64(len(wavWithOneSample)))
+	wavReader, err := NewReader(wavFile, int64(len(wavWithOneSample)))
 	assert.Nil(t, err)
 	assert.Equal(t, 1, wavReader.GetSampleCount())
 	rawSample, err := wavReader.ReadRawSample()
@@ -187,7 +187,7 @@ func TestReadSample_Raw(t *testing.T) {
 func TestReadSample(t *testing.T) {
 	t.Parallel()
 	wavFile := bytes.NewReader(wavWithOneSample)
-	wavReader, err := NewWavReader(wavFile, int64(len(wavWithOneSample)))
+	wavReader, err := NewReader(wavFile, int64(len(wavWithOneSample)))
 	assert.Nil(t, err)
 	assert.Equal(t, 1, wavReader.GetSampleCount())
 	sample, err := wavReader.ReadSample()

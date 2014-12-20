@@ -8,16 +8,16 @@ import (
 	"os"
 )
 
-type wavOutput interface {
+type output interface {
 	io.Writer
 	io.Seeker
 	io.Closer
 }
 
-// WavWriter encapsulates a io.WriteSeeker and supplies Functions for writing samples
-type WavWriter struct {
-	wavOutput
-	options   WavFile
+// Writer encapsulates a io.WriteSeeker and supplies Functions for writing samples
+type Writer struct {
+	output
+	options   File
 	sampleBuf *bufio.Writer
 
 	samplesWritten int32
@@ -25,14 +25,14 @@ type WavWriter struct {
 }
 
 // NewWriter creates a new WaveWriter and writes the header to it
-func (file WavFile) NewWriter(out wavOutput) (wr *WavWriter, err error) {
+func (file File) NewWriter(out output) (wr *Writer, err error) {
 	if file.Channels != 1 {
 		err = fmt.Errorf("sorry, only mono currently")
 		return
 	}
 
-	wr = &WavWriter{}
-	wr.wavOutput = out
+	wr = &Writer{}
+	wr.output = out
 	wr.sampleBuf = bufio.NewWriter(out)
 	wr.options = file
 
@@ -82,7 +82,7 @@ func (file WavFile) NewWriter(out wavOutput) (wr *WavWriter, err error) {
 }
 
 // WriteInt32 writes the sample to the file using the binary package
-func (w *WavWriter) WriteInt32(sample int32) error {
+func (w *Writer) WriteInt32(sample int32) error {
 	err := binary.Write(w.sampleBuf, binary.LittleEndian, sample)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (w *WavWriter) WriteInt32(sample int32) error {
 }
 
 // WriteSample writes a []byte array to file without conversion
-func (w *WavWriter) WriteSample(sample []byte) error {
+func (w *Writer) WriteSample(sample []byte) error {
 	if len(sample)*8 != int(w.options.SignificantBits) {
 		return fmt.Errorf("incorrect Sample Length %d", len(sample))
 	}
@@ -112,7 +112,7 @@ func (w *WavWriter) WriteSample(sample []byte) error {
 }
 
 // GetDumbWriter gives you a std io.Writer, starting from the first sample. usefull for piping data.
-func (w *WavWriter) GetDumbWriter() (wr wavOutput, countPtr *int32, err error) {
+func (w *Writer) GetDumbWriter() (wr output, countPtr *int32, err error) {
 	if w.samplesWritten != 0 {
 		return nil, nil, fmt.Errorf("Please only use this on its own")
 	}
@@ -121,7 +121,7 @@ func (w *WavWriter) GetDumbWriter() (wr wavOutput, countPtr *int32, err error) {
 }
 
 // Close corrects the filesize information in the header
-func (w *WavWriter) Close() error {
+func (w *Writer) Close() error {
 	_, err := w.Seek(0, os.SEEK_SET)
 	if err != nil {
 		return err
@@ -152,5 +152,5 @@ func (w *WavWriter) Close() error {
 		return err
 	}
 
-	return w.wavOutput.Close()
+	return w.output.Close()
 }

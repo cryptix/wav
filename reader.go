@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type WavReader struct {
+type Reader struct {
 	input io.ReadSeeker
 	size  int64
 
@@ -26,7 +26,7 @@ type WavReader struct {
 	numSamples  uint32
 }
 
-func (wav WavReader) String() string {
+func (wav Reader) String() string {
 	msg := fmt.Sprintln("File informations")
 	msg += fmt.Sprintln("=================")
 	msg += fmt.Sprintf("File size         : %d bytes\n", wav.size)
@@ -44,12 +44,12 @@ func (wav WavReader) String() string {
 	return msg
 }
 
-func NewWavReader(rd io.ReadSeeker, size int64) (wav *WavReader, err error) {
+func NewReader(rd io.ReadSeeker, size int64) (wav *Reader, err error) {
 	if size > maxSize {
 		return nil, ErrInputToLarge
 	}
 
-	wav = new(WavReader)
+	wav = new(Reader)
 	wav.input = rd
 	wav.size = size
 
@@ -63,7 +63,7 @@ func NewWavReader(rd io.ReadSeeker, size int64) (wav *WavReader, err error) {
 	return wav, nil
 }
 
-func (wav *WavReader) parseHeaders() (err error) {
+func (wav *Reader) parseHeaders() (err error) {
 
 	wav.header = &riffHeader{}
 	var (
@@ -143,7 +143,7 @@ readLoop:
 }
 
 // parseChunkFmt
-func (wav *WavReader) parseChunkFmt() (err error) {
+func (wav *Reader) parseChunkFmt() (err error) {
 	wav.chunkFmt = &riffChunkFmt{}
 
 	if err = binary.Read(wav.input, binary.LittleEndian, wav.chunkFmt); err != nil {
@@ -165,24 +165,24 @@ func (wav *WavReader) parseChunkFmt() (err error) {
 	return nil
 }
 
-func (wav *WavReader) GetSampleCount() uint32 {
+func (wav *Reader) GetSampleCount() uint32 {
 	return wav.numSamples
 }
 
-func (w WavReader) GetWavFile() WavFile {
-	return WavFile{
+func (w Reader) GetFile() File {
+	return File{
 		SampleRate:      w.chunkFmt.SampleRate,
 		Channels:        w.chunkFmt.NumChannels,
 		SignificantBits: w.chunkFmt.BitsPerSample,
 	}
 }
 
-func (wav WavReader) FirstSampleOffset() uint32 {
+func (wav Reader) FirstSampleOffset() uint32 {
 	return wav.firstSamplePos
 }
 
 // GetDumbReader gives you a std io.Reader, starting from the first sample. usefull for piping data.
-func (wav WavReader) GetDumbReader() (r io.Reader, err error) {
+func (wav Reader) GetDumbReader() (r io.Reader, err error) {
 	// move reader to the first sample
 	_, err = wav.input.Seek(int64(wav.firstSamplePos), os.SEEK_SET)
 	if err != nil {
@@ -192,7 +192,7 @@ func (wav WavReader) GetDumbReader() (r io.Reader, err error) {
 	return wav.input, nil
 }
 
-func (wav *WavReader) ReadRawSample() ([]byte, error) {
+func (wav *Reader) ReadRawSample() ([]byte, error) {
 	if wav.samplesRead > wav.numSamples {
 		return nil, io.EOF
 	}
@@ -212,7 +212,7 @@ func (wav *WavReader) ReadRawSample() ([]byte, error) {
 	return buf, nil
 }
 
-func (wav *WavReader) ReadSample() (n int32, err error) {
+func (wav *Reader) ReadSample() (n int32, err error) {
 	s, err := wav.ReadRawSample()
 	if err != nil {
 		return 0, err

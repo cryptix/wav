@@ -19,7 +19,7 @@ func main() {
 	checkErr(err)
 	defer wavOut.Close()
 
-	meta := wav.WavFile{
+	meta := wav.File{
 		Channels:        1,
 		SampleRate:      rate,
 		SignificantBits: bits,

@@ -19,7 +19,7 @@ func main() {
 	testWav, err := os.Open(os.Args[1])
 	checkErr(err)
 
-	wavReader, err := wav.NewWavReader(testWav, testInfo.Size())
+	wavReader, err := wav.NewReader(testWav, testInfo.Size())
 	checkErr(err)
 
 	fmt.Println("Hello, wav")

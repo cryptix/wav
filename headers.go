@@ -11,7 +11,7 @@ var (
 	tokenData       = [4]byte{'d', 'a', 't', 'a'}
 )
 
-type WavFile struct {
+type File struct {
 	SampleRate      uint32
 	SignificantBits uint16
 	Channels        uint16

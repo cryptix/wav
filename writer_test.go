@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var wf = WavFile{
+var wf = File{
 	SampleRate:      44100,
 	Channels:        1,
 	SignificantBits: 16,
 }
 
-func TestNewWavWriter(t *testing.T) {
+func TestNewWriter(t *testing.T) {
 	t.Parallel()
 	f, err := ioutil.TempFile("", "wavPkgtest")
 	assert.Nil(t, err)
