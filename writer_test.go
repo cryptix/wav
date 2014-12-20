@@ -22,12 +22,13 @@ func TestNewWavWriter(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Nil(t, wr.Close())
 
-	_, err = f.Seek(0, os.SEEK_SET)
+	f, err = os.Open(f.Name())
 	assert.Nil(t, err)
 
 	b, err := ioutil.ReadAll(f)
 	assert.Nil(t, err)
 	assert.Len(t, b, 44)
+
 	assert.Contains(t, string(b), string(riff))
 	assert.Contains(t, string(b), string(wave))
 	assert.Contains(t, string(b), string(fmt20))
