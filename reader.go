@@ -177,6 +177,10 @@ func (w WavReader) GetWavFile() WavFile {
 	}
 }
 
+func (wav WavReader) FirstSampleOffset() uint32 {
+	return wav.firstSamplePos
+}
+
 // GetDumbReader gives you a std io.Reader, starting from the first sample. usefull for piping data.
 func (wav WavReader) GetDumbReader() (r io.Reader, err error) {
 	// move reader to the first sample
