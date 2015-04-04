@@ -60,7 +60,7 @@ func TestParseHeaders_complete(t *testing.T) {
 	wavFile := bytes.NewReader(b.Bytes())
 	wavReader, err := NewReader(wavFile, int64(b.Len()))
 	assert.Nil(t, err)
-	assert.Equal(t, 0, wavReader.GetSampleCount())
+	assert.Equal(t, uint32(0), wavReader.GetSampleCount())
 	assert.Equal(t, File{
 		SampleRate:      44100,
 		Channels:        1,
@@ -178,7 +178,7 @@ func TestReadSample_Raw(t *testing.T) {
 	wavFile := bytes.NewReader(wavWithOneSample)
 	wavReader, err := NewReader(wavFile, int64(len(wavWithOneSample)))
 	assert.Nil(t, err)
-	assert.Equal(t, 1, wavReader.GetSampleCount())
+	assert.Equal(t, uint32(1), wavReader.GetSampleCount())
 	rawSample, err := wavReader.ReadRawSample()
 	assert.Nil(t, err)
 	assert.Equal(t, []byte{1, 1}, rawSample)
@@ -189,7 +189,7 @@ func TestReadSample(t *testing.T) {
 	wavFile := bytes.NewReader(wavWithOneSample)
 	wavReader, err := NewReader(wavFile, int64(len(wavWithOneSample)))
 	assert.Nil(t, err)
-	assert.Equal(t, 1, wavReader.GetSampleCount())
+	assert.Equal(t, uint32(1), wavReader.GetSampleCount())
 	sample, err := wavReader.ReadSample()
 	assert.Nil(t, err)
 	assert.Equal(t, 257, sample)
