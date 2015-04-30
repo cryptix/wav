@@ -14,7 +14,7 @@ var wf = File{
 	SignificantBits: 16,
 }
 
-func TestNewWriter(t *testing.T) {
+func TestNewWriter_Header(t *testing.T) {
 	t.Parallel()
 	f, err := ioutil.TempFile("", "wavPkgtest")
 	assert.Nil(t, err)
@@ -28,6 +28,32 @@ func TestNewWriter(t *testing.T) {
 	b, err := ioutil.ReadAll(f)
 	assert.Nil(t, err)
 	assert.Len(t, b, 44)
+
+	assert.Contains(t, string(b), string(riff))
+	assert.Contains(t, string(b), string(wave))
+	assert.Contains(t, string(b), string(fmt20))
+
+	assert.Nil(t, os.Remove(f.Name()))
+}
+
+func TestNewWriter_1Sample(t *testing.T) {
+	t.Parallel()
+	f, err := ioutil.TempFile("", "wavPkgtest")
+	assert.Nil(t, err)
+	wr, err := wf.NewWriter(f)
+	assert.Nil(t, err)
+
+	err = wr.WriteSample([]byte{1, 1})
+	assert.Nil(t, err)
+
+	assert.Nil(t, wr.Close())
+
+	f, err = os.Open(f.Name())
+	assert.Nil(t, err)
+
+	b, err := ioutil.ReadAll(f)
+	assert.Nil(t, err)
+	assert.Len(t, b, 46)
 
 	assert.Contains(t, string(b), string(riff))
 	assert.Contains(t, string(b), string(wave))

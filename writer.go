@@ -122,6 +122,11 @@ func (w *Writer) GetDumbWriter() (wr output, countPtr *int32, err error) {
 
 // Close corrects the filesize information in the header
 func (w *Writer) Close() error {
+
+	if err := w.sampleBuf.Flush(); err != nil {
+		return err
+	}
+
 	_, err := w.Seek(0, os.SEEK_SET)
 	if err != nil {
 		return err
