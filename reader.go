@@ -130,12 +130,16 @@ readLoop:
 		}
 	}
 
-	// Is audio supported ?
-	if wav.chunkFmt.AudioFormat != 1 {
-		return ErrFormatNotSupported
+	if wav.chunkFmt == nil {
+		return ErrBrokenChunkFmt
 	}
 
 	wav.bytesPerSample = uint32(wav.chunkFmt.BitsPerSample / 8)
+
+	if wav.bytesPerSample == 0 {
+		return ErrNoBitsPerSample
+	}
+
 	wav.numSamples = wav.dataBlocSize / wav.bytesPerSample
 	wav.duration = time.Duration(float64(wav.numSamples)/float64(wav.chunkFmt.SampleRate)) * time.Second
 
@@ -144,7 +148,7 @@ readLoop:
 
 // parseChunkFmt
 func (wav *Reader) parseChunkFmt() (err error) {
-	wav.chunkFmt = &riffChunkFmt{}
+	wav.chunkFmt = new(riffChunkFmt)
 
 	if err = binary.Read(wav.input, binary.LittleEndian, wav.chunkFmt); err != nil {
 		return err
@@ -160,6 +164,11 @@ func (wav *Reader) parseChunkFmt() (err error) {
 		if _, err = wav.input.Seek(int64(extraparams), os.SEEK_CUR); err != nil {
 			return err
 		}
+	}
+
+	// Is audio supported ?
+	if wav.chunkFmt.AudioFormat != 1 {
+		return ErrFormatNotSupported
 	}
 
 	return nil

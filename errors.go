@@ -10,6 +10,9 @@ var (
 	ErrNotRiff      = errors.New("Not a RIFF file")
 	ErrNotWave      = errors.New("Not a WAVE file")
 
+	ErrBrokenChunkFmt  = errors.New("could not decode chunkFmt")
+	ErrNoBitsPerSample = errors.New("could not decode chunkFmt")
+
 	ErrFormatNotSupported = errors.New("Format not supported - Only uncompressed PCM currently")
 )
 

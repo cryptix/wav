@@ -3,6 +3,7 @@ package wav
 import (
 	"bytes"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -193,4 +194,50 @@ func TestReadSample(t *testing.T) {
 	sample, err := wavReader.ReadSample()
 	assert.Nil(t, err)
 	assert.Equal(t, 257, sample)
+}
+
+// panic: runtime error: invalid memory address or nil pointer dereference
+// [signal 0xb code=0x1 addr=0x4 pc=0x4399fb]
+//
+// goroutine 1 [running]:
+// github.com/cryptix/wav.(*Reader).parseHeaders(0xc208033720, 0x0, 0x0)
+// 	/tmp/go-fuzz-build857960013/src/github.com/cryptix/wav/reader.go:191 +0xe3b
+// github.com/cryptix/wav.NewReader(0x7f23a9550bd8, 0xc208037c80, 0x2d, 0xc208033720, 0x0, 0x0)
+// 	/tmp/go-fuzz-build857960013/src/github.com/cryptix/wav/reader.go:64 +0x177
+// github.com/cryptix/wav.Fuzz(0x7f23a92cf000, 0x2d, 0x100000, 0x2)
+// 	/tmp/go-fuzz-build857960013/src/github.com/cryptix/wav/fuzz.go:12 +0x167
+// github.com/dvyukov/go-fuzz/go-fuzz-dep.Main(0x570c60, 0x5d4200, 0x5f6, 0x5f6)
+// 	/home/cryptix/go/src/github.com/dvyukov/go-fuzz/go-fuzz-dep/main.go:64 +0x309
+// main.main()
+// 	/tmp/go-fuzz-build857960013/src/go-fuzz-main/main.go:10 +0x4e
+// exit status 2
+func TestReadFuzzed_panic1(t *testing.T) {
+	t.Parallel()
+	wavFile := strings.NewReader("RIFF%\x00\x00\x00WAVE0000\x10\x00\x00\x000000000000000000data00000")
+	_, err := NewReader(wavFile, int64(wavFile.Len()))
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrBrokenChunkFmt, err)
+}
+
+// panic: runtime error: integer divide by zero
+// [signal 0x8 code=0x1 addr=0x439ae9 pc=0x439ae9]
+//
+// goroutine 1 [running]:
+// github.com/cryptix/wav.(*Reader).parseHeaders(0xc208032cd0, 0x0, 0x0)
+// 	/tmp/go-fuzz-build857960013/src/github.com/cryptix/wav/reader.go:200 +0xf29
+// github.com/cryptix/wav.NewReader(0x7fbca32b6bd8, 0xc208037ef0, 0x2d, 0xc208032cd0, 0x0, 0x0)
+// 	/tmp/go-fuzz-build857960013/src/github.com/cryptix/wav/reader.go:64 +0x177
+// github.com/cryptix/wav.Fuzz(0x7fbca3035000, 0x2d, 0x100000, 0x2)
+// 	/tmp/go-fuzz-build857960013/src/github.com/cryptix/wav/fuzz.go:12 +0x167
+// github.com/dvyukov/go-fuzz/go-fuzz-dep.Main(0x570c60, 0x5d4200, 0x5f6, 0x5f6)
+// 	/home/cryptix/go/src/github.com/dvyukov/go-fuzz/go-fuzz-dep/main.go:64 +0x309
+// main.main()
+// 	/tmp/go-fuzz-build857960013/src/go-fuzz-main/main.go:10 +0x4e
+// exit status 2
+func TestReadFuzzed_panic2(t *testing.T) {
+	t.Parallel()
+	wavFile := strings.NewReader("RIFF%\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00000000000000\a\x00data00000")
+	_, err := NewReader(wavFile, int64(wavFile.Len()))
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrBrokenChunkFmt, err)
 }
