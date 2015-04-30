@@ -1,11 +1,12 @@
 package wav
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/cheekybits/is"
 )
 
 var wf = File{
@@ -16,60 +17,63 @@ var wf = File{
 
 func TestNewWriter_Header(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	f, err := ioutil.TempFile("", "wavPkgtest")
-	assert.Nil(t, err)
+	is.NoErr(err)
 	wr, err := wf.NewWriter(f)
-	assert.Nil(t, err)
-	assert.Nil(t, wr.Close())
+	is.NoErr(err)
+	is.Nil(wr.Close())
 
 	f, err = os.Open(f.Name())
-	assert.Nil(t, err)
+	is.NoErr(err)
 
 	b, err := ioutil.ReadAll(f)
-	assert.Nil(t, err)
-	assert.Len(t, b, 44)
+	is.NoErr(err)
+	is.Equal(len(b), 44)
 
-	assert.Contains(t, string(b), string(riff))
-	assert.Contains(t, string(b), string(wave))
-	assert.Contains(t, string(b), string(fmt20))
+	is.True(bytes.Contains(b, riff))
+	is.True(bytes.Contains(b, wave))
+	is.True(bytes.Contains(b, fmt20))
 
-	assert.Nil(t, os.Remove(f.Name()))
+	is.Nil(os.Remove(f.Name()))
 }
 
 func TestNewWriter_1Sample(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	f, err := ioutil.TempFile("", "wavPkgtest")
-	assert.Nil(t, err)
+	is.NoErr(err)
 	wr, err := wf.NewWriter(f)
-	assert.Nil(t, err)
+	is.NoErr(err)
 
 	err = wr.WriteSample([]byte{1, 1})
-	assert.Nil(t, err)
+	is.NoErr(err)
 
-	assert.Nil(t, wr.Close())
+	is.Nil(wr.Close())
 
 	f, err = os.Open(f.Name())
-	assert.Nil(t, err)
+	is.NoErr(err)
 
 	b, err := ioutil.ReadAll(f)
-	assert.Nil(t, err)
-	assert.Len(t, b, 46)
+	is.NoErr(err)
+	is.Equal(len(b), 46)
 
-	assert.Contains(t, string(b), string(riff))
-	assert.Contains(t, string(b), string(wave))
-	assert.Contains(t, string(b), string(fmt20))
+	is.True(bytes.Contains(b, riff))
+	is.True(bytes.Contains(b, wave))
+	is.True(bytes.Contains(b, fmt20))
 
-	assert.Nil(t, os.Remove(f.Name()))
+	is.Nil(os.Remove(f.Name()))
 }
 
 func bWriteByteSlice(sample []byte, samples int, b *testing.B) {
 	b.StopTimer()
+	is := is.New(b)
 	f, err := ioutil.TempFile("", "wavPkgtest")
-	assert.Nil(b, err)
+	is.NoErr(err)
 	defer os.Remove(f.Name())
 	wr, err := wf.NewWriter(f)
 	defer wr.Close()
-	assert.Nil(b, err)
+	is.NoErr(err)
 	b.SetBytes(int64(2 * samples))
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -91,12 +95,13 @@ func BenchmarkWriteBuf_2Sec(b *testing.B)     { bWriteByteSlice([]byte{0, 0}, 2*
 
 func benchWriteInt(sample int32, samples int, b *testing.B) {
 	b.StopTimer()
+	is := is.New(b)
 	f, err := ioutil.TempFile("", "wavPkgtest")
-	assert.Nil(b, err)
+	is.NoErr(err)
 	defer os.Remove(f.Name())
 	wr, err := wf.NewWriter(f)
 	defer wr.Close()
-	assert.Nil(b, err)
+	is.NoErr(err)
 	b.SetBytes(int64(2 * samples))
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/cheekybits/is"
 )
 
 var (
@@ -42,14 +42,16 @@ func init() {
 
 func TestNewReader_inputTooLarge(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	_, err := NewReader(
 		bytes.NewReader([]byte{}),
 		99999999999999999)
-	assert.Equal(t, ErrInputToLarge, err)
+	is.Equal(err, ErrInputToLarge)
 }
 
 func TestParseHeaders_complete(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	// Parsing the header of an wav with 0 samples
 	var b bytes.Buffer
 	b.Write(riff)
@@ -60,9 +62,9 @@ func TestParseHeaders_complete(t *testing.T) {
 	b.Write([]byte{0x00, 0x00, 0x00, 0x00})
 	wavFile := bytes.NewReader(b.Bytes())
 	wavReader, err := NewReader(wavFile, int64(b.Len()))
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(0), wavReader.GetSampleCount())
-	assert.Equal(t, File{
+	is.NoErr(err)
+	is.Equal(uint32(0), wavReader.GetSampleCount())
+	is.Equal(File{
 		SampleRate:      44100,
 		Channels:        1,
 		SignificantBits: 16,
@@ -71,27 +73,30 @@ func TestParseHeaders_complete(t *testing.T) {
 
 func TestParseHeaders_tooShort(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	wavData := append(riff, 0x08, 0x00)
 	wavFile := bytes.NewReader(wavData)
 	_, err := NewReader(wavFile, int64(len(wavData)))
-	assert.NotNil(t, err)
-	assert.Equal(t, io.ErrUnexpectedEOF, err)
+	is.Err(err)
+	is.Equal(err, io.ErrUnexpectedEOF)
 }
 
 func TestParseHeaders_chunkFmtMissing(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	var b bytes.Buffer
 	b.Write(riff)
 	b.Write([]byte{0x04, 0x00, 0x00, 0x00}) // chunkSize
 	b.Write(wave)
 	wavFile := bytes.NewReader(b.Bytes())
 	_, err := NewReader(wavFile, int64(b.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, io.ErrUnexpectedEOF, err)
+	is.Err(err)
+	is.Equal(err, io.ErrUnexpectedEOF)
 }
 
 func TestParseHeaders_chunkFmtTooShort(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	var b bytes.Buffer
 	b.Write(riff)
 	b.Write([]byte{0x08, 0x00, 0x00, 0x00}) // chunkSize
@@ -99,12 +104,13 @@ func TestParseHeaders_chunkFmtTooShort(t *testing.T) {
 	b.Write(fmt20)
 	wavFile := bytes.NewReader(b.Bytes())
 	_, err := NewReader(wavFile, int64(b.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, io.ErrUnexpectedEOF, err)
+	is.Err(err)
+	is.Equal(err, io.ErrUnexpectedEOF)
 }
 
 func TestParseHeaders_chunkFmtTooShort2(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	var b bytes.Buffer
 	b.Write(riff)
 	b.Write([]byte{0x0a, 0x00, 0x00, 0x00}) // chunkSize
@@ -113,24 +119,26 @@ func TestParseHeaders_chunkFmtTooShort2(t *testing.T) {
 	b.Write([]byte{0, 0})
 	wavFile := bytes.NewReader(b.Bytes())
 	_, err := NewReader(wavFile, int64(b.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, io.ErrUnexpectedEOF, err)
+	is.Err(err)
+	is.Equal(err, io.ErrUnexpectedEOF)
 }
 
 func TestParseHeaders_corruptRiff(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	var b bytes.Buffer
 	b.Write([]byte{0x52, 0, 0x46, 0x46}) // "R\0FF"
 	b.Write(chunkSize24)
 	b.Write(wave)
 	wavFile := bytes.NewReader(b.Bytes())
 	_, err := NewReader(wavFile, int64(b.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, ErrNotRiff, err)
+	is.Err(err)
+	is.Equal(ErrNotRiff, err)
 }
 
 func TestParseHeaders_chunkSizeNull(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	var b bytes.Buffer
 	b.Write(riff)
 	b.Write([]byte{0x00, 0x00, 0x00, 0x00}) // chunkSize
@@ -138,13 +146,14 @@ func TestParseHeaders_chunkSizeNull(t *testing.T) {
 	b.Write(fmt20)
 	wavFile := bytes.NewReader(b.Bytes())
 	_, err := NewReader(wavFile, int64(b.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, ErrIncorrectChunkSize{8, 16}, err, "bad error")
-	assert.EqualError(t, err, "Incorrect ChunkSize. Got[8] Wanted[16]")
+	is.Err(err)
+	is.Equal(ErrIncorrectChunkSize{8, 16}, err)
+	is.Equal("Incorrect ChunkSize. Got[8] Wanted[16]", err.Error())
 }
 
 func TestParseHeaders_notWave(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	var b bytes.Buffer
 	b.Write(riff)
 	b.Write([]byte{0x09, 0x00, 0x00, 0x00}) // chunkSize
@@ -153,12 +162,13 @@ func TestParseHeaders_notWave(t *testing.T) {
 	b.Write([]byte{0})
 	wavFile := bytes.NewReader(b.Bytes())
 	_, err := NewReader(wavFile, int64(b.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, ErrNotWave, err)
+	is.Err(err)
+	is.Equal(ErrNotWave, err)
 }
 
 func TestParseHeaders_fmtNotSupported(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	var b bytes.Buffer
 	b.Write(riff)
 	b.Write(chunkSize24)
@@ -170,30 +180,32 @@ func TestParseHeaders_fmtNotSupported(t *testing.T) {
 	buf[21] = 2 // change byte 5 of riffChunk
 	wavFile := bytes.NewReader(buf)
 	_, err := NewReader(wavFile, int64(b.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, ErrFormatNotSupported, err)
+	is.Err(err)
+	is.Equal(ErrFormatNotSupported, err)
 }
 
 func TestReadSample_Raw(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	wavFile := bytes.NewReader(wavWithOneSample)
 	wavReader, err := NewReader(wavFile, int64(len(wavWithOneSample)))
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(1), wavReader.GetSampleCount())
+	is.NoErr(err)
+	is.Equal(uint32(1), wavReader.GetSampleCount())
 	rawSample, err := wavReader.ReadRawSample()
-	assert.Nil(t, err)
-	assert.Equal(t, []byte{1, 1}, rawSample)
+	is.NoErr(err)
+	is.Equal([]byte{1, 1}, rawSample)
 }
 
 func TestReadSample(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	wavFile := bytes.NewReader(wavWithOneSample)
 	wavReader, err := NewReader(wavFile, int64(len(wavWithOneSample)))
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(1), wavReader.GetSampleCount())
+	is.NoErr(err)
+	is.Equal(uint32(1), wavReader.GetSampleCount())
 	sample, err := wavReader.ReadSample()
-	assert.Nil(t, err)
-	assert.Equal(t, 257, sample)
+	is.NoErr(err)
+	is.Equal(257, sample)
 }
 
 // panic: runtime error: invalid memory address or nil pointer dereference
@@ -213,10 +225,11 @@ func TestReadSample(t *testing.T) {
 // exit status 2
 func TestReadFuzzed_panic1(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	wavFile := strings.NewReader("RIFF%\x00\x00\x00WAVE0000\x10\x00\x00\x000000000000000000data00000")
 	_, err := NewReader(wavFile, int64(wavFile.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, ErrBrokenChunkFmt, err)
+	is.Err(err)
+	is.Equal(ErrBrokenChunkFmt, err)
 }
 
 // panic: runtime error: integer divide by zero
@@ -236,8 +249,9 @@ func TestReadFuzzed_panic1(t *testing.T) {
 // exit status 2
 func TestReadFuzzed_panic2(t *testing.T) {
 	t.Parallel()
+	is := is.New(t)
 	wavFile := strings.NewReader("RIFF%\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00000000000000\a\x00data00000")
 	_, err := NewReader(wavFile, int64(wavFile.Len()))
-	assert.NotNil(t, err)
-	assert.Equal(t, ErrBrokenChunkFmt, err)
+	is.Err(err)
+	is.Equal(ErrBrokenChunkFmt, err)
 }

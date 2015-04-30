@@ -5,18 +5,20 @@ import (
 	"math"
 	"os"
 	"testing"
+
+	"github.com/cheekybits/is"
 )
 
 func TestWriteRead_Int32(t *testing.T) {
+	is := is.New(t)
+
 	const (
 		bits = 32
 		rate = 44100
 	)
 
 	f, err := ioutil.TempFile("", "wavPkgtest")
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	testFname := f.Name()
 
@@ -27,9 +29,7 @@ func TestWriteRead_Int32(t *testing.T) {
 	}
 
 	writer, err := meta.NewWriter(f)
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	var freq float64
 	freq = 0.0001
@@ -45,38 +45,30 @@ func TestWriteRead_Int32(t *testing.T) {
 		}
 	}
 	err = writer.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	f, err = os.Open(testFname)
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	stat, err := f.Stat()
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	_, err = NewReader(f, stat.Size())
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
-	os.Remove(testFname)
+	is.NoErr(os.Remove(testFname))
 }
 
 func TestWriteRead_Sample(t *testing.T) {
+	is := is.New(t)
+
 	const (
 		bits = 16
 		rate = 44100
 	)
 
 	f, err := ioutil.TempFile("", "wavPkgtest")
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	testFname := f.Name()
 
@@ -87,9 +79,7 @@ func TestWriteRead_Sample(t *testing.T) {
 	}
 
 	writer, err := meta.NewWriter(f)
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	var freq float64
 	freq = 0.0001
@@ -111,24 +101,16 @@ func TestWriteRead_Sample(t *testing.T) {
 		}
 	}
 	err = writer.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	f, err = os.Open(testFname)
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	stat, err := f.Stat()
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
 	_, err = NewReader(f, stat.Size())
-	if err != nil {
-		t.Fatal(err)
-	}
+	is.NoErr(err)
 
-	os.Remove(testFname)
+	is.NoErr(os.Remove(testFname))
 }
