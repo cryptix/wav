@@ -9,14 +9,15 @@ import (
 
 	"github.com/cryptix/wav"
 
-	"code.google.com/p/plotinum/plot"
-	"code.google.com/p/plotinum/plotter"
-	"code.google.com/p/plotinum/plotutil"
+	"github.com/gonum/plot"
+	"github.com/gonum/plot/plotter"
+	"github.com/gonum/plot/plotutil"
+	"github.com/gonum/plot/vg"
 )
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "Usage: simpleRead <file.wav>\n")
+		fmt.Fprintf(os.Stderr, "Usage: plotWav <file.wav>\n")
 		os.Exit(1)
 	}
 
@@ -66,9 +67,9 @@ func main() {
 
 	// construct output filename
 	inputFname := path.Base(os.Args[1])
-	plotFname := strings.Split(inputFname, ".")[0] + ".png"
+	plotFname := strings.Split(inputFname, ".")[0] + ".pdf"
 
-	if err := p.Save(10, 4, plotFname); err != nil {
+	if err := p.Save(10*vg.Inch, 4*vg.Inch, plotFname); err != nil {
 		panic(err)
 	}
 }
