@@ -62,9 +62,6 @@ func main() {
 		pts[i].Y = float64(n)
 	}
 
-	fmt.Println("len(pts)=", len(pts)) // debug
-	fmt.Println(pts)
-
 	err = plotutil.AddLinePoints(p, "", pts)
 	checkErr(err)
 
