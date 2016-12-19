@@ -6,16 +6,21 @@ import (
 )
 
 var (
+	// ErrInputToLarge error
 	ErrInputToLarge = errors.New("Input too large")
-	ErrNotRiff      = errors.New("Not a RIFF file")
-	ErrNotWave      = errors.New("Not a WAVE file")
-
-	ErrBrokenChunkFmt  = errors.New("could not decode chunkFmt")
+	// ErrNotRiff error
+	ErrNotRiff = errors.New("Not a RIFF file")
+	// ErrNotWave error
+	ErrNotWave = errors.New("Not a WAVE file")
+	// ErrBrokenChunkFmt error
+	ErrBrokenChunkFmt = errors.New("could not decode chunkFmt")
+	// ErrNoBitsPerSample error
 	ErrNoBitsPerSample = errors.New("could not decode chunkFmt")
-
+	// ErrFormatNotSupported error
 	ErrFormatNotSupported = errors.New("Format not supported - Only uncompressed PCM currently")
 )
 
+// ErrIncorrectChunkSize struct
 type ErrIncorrectChunkSize struct {
 	Got, Wanted uint32
 }

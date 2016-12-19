@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Reader wraps WAV stream
 type Reader struct {
 	input io.ReadSeeker
 	size  int64
@@ -44,6 +45,7 @@ func (wav Reader) String() string {
 	return msg
 }
 
+// NewReader returns a new WAV reader wrapper
 func NewReader(rd io.ReadSeeker, size int64) (wav *Reader, err error) {
 	if size > maxSize {
 		return nil, ErrInputToLarge
@@ -174,20 +176,39 @@ func (wav *Reader) parseChunkFmt() (err error) {
 	return nil
 }
 
+// GetSampleCount returns the number of samples
 func (wav *Reader) GetSampleCount() uint32 {
 	return wav.numSamples
 }
 
-func (w Reader) GetFile() File {
+// GetFile returns File
+func (wav Reader) GetFile() File {
 	return File{
-		SampleRate:      w.chunkFmt.SampleRate,
-		Channels:        w.chunkFmt.NumChannels,
-		SignificantBits: w.chunkFmt.BitsPerSample,
+		SampleRate:      wav.chunkFmt.SampleRate,
+		Channels:        wav.chunkFmt.NumChannels,
+		SignificantBits: wav.chunkFmt.BitsPerSample,
+		BytesPerSecond:  wav.chunkFmt.BytesPerSec,
+		AudioFormat:     wav.chunkFmt.AudioFormat,
+		NumberOfSamples: wav.numSamples,
+		SoundSize:       wav.dataBlocSize,
+		Duration:        wav.duration,
+		Canonical:       wav.canonical && !wav.extraChunk,
 	}
 }
 
+// FirstSampleOffset in the WAV stream
 func (wav Reader) FirstSampleOffset() uint32 {
 	return wav.firstSamplePos
+}
+
+// Reset the wavReader
+func (wav Reader) Reset() (err error) {
+	_, err = wav.input.Seek(int64(wav.firstSamplePos), os.SEEK_SET)
+	if err == nil {
+		wav.samplesRead = 0
+	}
+
+	return
 }
 
 // GetDumbReader gives you a std io.Reader, starting from the first sample. usefull for piping data.
@@ -201,6 +222,7 @@ func (wav Reader) GetDumbReader() (r io.Reader, err error) {
 	return wav.input, nil
 }
 
+// ReadRawSample returns the raw []byte slice
 func (wav *Reader) ReadRawSample() ([]byte, error) {
 	if wav.samplesRead > wav.numSamples {
 		return nil, io.EOF
@@ -216,11 +238,12 @@ func (wav *Reader) ReadRawSample() ([]byte, error) {
 		return nil, fmt.Errorf("Read %d bytes, should have read %d", n, wav.bytesPerSample)
 	}
 
-	wav.samplesRead += 1
+	wav.samplesRead++
 
 	return buf, nil
 }
 
+// ReadSample returns the parsed sample bytes as integers
 func (wav *Reader) ReadSample() (n int32, err error) {
 	s, err := wav.ReadRawSample()
 	if err != nil {
@@ -243,3 +266,102 @@ func (wav *Reader) ReadSample() (n int32, err error) {
 
 	return
 }
+
+// ReadSampleEvery returns the parsed sample bytes as integers every X samples
+func (wav *Reader) ReadSampleEvery(every uint32) (samples []int32, err error) {
+
+	// Reset any other readers
+	err = wav.Reset()
+	if err != nil {
+		return
+	}
+
+	var n int32
+	var total int
+	total = int(wav.numSamples / every)
+	for total >= 0 {
+		total = total - 1
+
+		n, err = wav.ReadSample()
+		if err != nil {
+			return
+		}
+
+		samples = append(samples, n)
+
+		_, err = wav.input.Seek(int64(every), os.SEEK_CUR)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+/*
+// Sample of WAV
+type Sample struct {
+	Offset uint32
+	Value  int32
+	Second uint32
+}
+
+// ReadSampleChannelEvery X samples delivered over a channel
+func (wav *Reader) ReadSampleChannelEvery(every uint32) (c chan *Sample, e chan error) {
+
+	// Save resources by making a channel to range over
+	c = make(chan *Sample, 100)
+	e = make(chan error)
+
+	go func() {
+
+		var err error
+
+		// Reset any other readers
+		wav.samplesRead = 0
+
+		// Start from the begining
+		_, err = wav.input.Seek(int64(wav.firstSamplePos), os.SEEK_SET)
+		if err != nil {
+			close(c)
+			e <- err
+			return
+		}
+
+		var n int32
+		var total int
+		var pos uint32
+		total = int(wav.numSamples / every)
+		for total >= 0 {
+			total = total - 1
+			pos += every
+
+			// Read a sample
+			n, err = wav.ReadSample()
+			if err != nil {
+				close(c)
+				e <- err
+				return
+			}
+
+			c <- &Sample{
+				Offset: pos,
+				Second: pos / wav.chunkFmt.SampleRate,
+				Value:  n,
+			}
+
+			_, err = wav.input.Seek(int64(every), os.SEEK_CUR)
+			if err != nil {
+				close(c)
+				e <- err
+				return
+			}
+		}
+
+		// Reset any other readers
+		wav.samplesRead = 0
+	}()
+
+	return
+}
+*/

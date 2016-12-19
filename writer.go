@@ -112,7 +112,7 @@ func (w *Writer) WriteSample(sample []byte) error {
 }
 
 // GetDumbWriter gives you a std io.Writer, starting from the first sample. usefull for piping data.
-func (w *Writer) GetDumbWriter() (wr output, countPtr *int32, err error) {
+func (w *Writer) GetDumbWriter() (io.Writer, *int32, error) {
 	if w.samplesWritten != 0 {
 		return nil, nil, fmt.Errorf("Please only use this on its own")
 	}

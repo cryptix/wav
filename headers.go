@@ -1,5 +1,7 @@
 package wav
 
+import "time"
+
 const (
 	maxSize = 2 << 31
 )
@@ -11,10 +13,17 @@ var (
 	tokenData       = [4]byte{'d', 'a', 't', 'a'}
 )
 
+// File describes the WAV file
 type File struct {
 	SampleRate      uint32
 	SignificantBits uint16
 	Channels        uint16
+	NumberOfSamples uint32
+	Duration        time.Duration
+	AudioFormat     uint16
+	SoundSize       uint32
+	Canonical       bool
+	BytesPerSecond  uint32
 }
 
 // 12 byte header
