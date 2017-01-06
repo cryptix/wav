@@ -30,10 +30,14 @@ func main() {
 	meta = wavReader.GetFile()
 
 	// Every half a second read a sample
-	readSampleRate := meta.SampleRate / uint32(2)
+	readSampleRate := meta.SampleRate / uint32(4)
 	fmt.Println("Read a sample every", readSampleRate)
 
-	samples, err := wavReader.ReadSampleEvery(readSampleRate)
+	// Number of samples to average together (if any)
+	var averageBy int
+	averageBy = 20 // 10, 40, 345, 1000, etc...
+
+	samples, err := wavReader.ReadSampleEvery(readSampleRate, averageBy)
 	if err != nil {
 		log.Fatal(err)
 	}

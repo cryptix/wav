@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"time"
 )
 
@@ -268,7 +269,7 @@ func (wav *Reader) ReadSample() (n int32, err error) {
 }
 
 // ReadSampleEvery returns the parsed sample bytes as integers every X samples
-func (wav *Reader) ReadSampleEvery(every uint32) (samples []int32, err error) {
+func (wav *Reader) ReadSampleEvery(every uint32, average int) (samples []int32, err error) {
 
 	// Reset any other readers
 	err = wav.Reset()
@@ -285,6 +286,38 @@ func (wav *Reader) ReadSampleEvery(every uint32) (samples []int32, err error) {
 		n, err = wav.ReadSample()
 		if err != nil {
 			return
+		}
+
+		// lets average the samples for better accuracy
+		// if average > 0 {
+		// 	var sum = n
+		// 	fmt.Println(n)
+		// 	for i := 1; i < average; i++ {
+		// 		n, err = wav.ReadSample()
+		// 		if err != nil {
+		// 			return
+		// 		}
+		// 		fmt.Println(n)
+		// 		sum += n
+		// 	}
+		// 	fmt.Println("Sum:", sum, "/", int32(average), sum/int32(average))
+		// 	n = sum / int32(average)
+		// }
+
+		// Median seems to reflect better than average
+		if average > 0 {
+			var sum = make([]int, average)
+			sum[0] = int(n)
+			for i := 1; i < average; i++ {
+				n, err = wav.ReadSample()
+				if err != nil {
+					return
+				}
+				sum[i] = int(n)
+			}
+			sort.Ints(sum)
+			// fmt.Println("Sum:", sum, "[", average/2, "] = ", sum[average/2])
+			n = int32(sum[average/2])
 		}
 
 		samples = append(samples, n)
