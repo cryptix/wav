@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/xeoncross/wav"
+	"github.com/cryptix/wav"
 )
 
 func main() {
