@@ -35,7 +35,7 @@ func TestWriteRead_Int32(t *testing.T) {
 	freq = 0.0001
 
 	// one second
-	for n := 0; n < rate; n += 1 {
+	for n := 0; n < rate; n++ {
 		y := int32(0.8 * math.Pow(2, bits-1) * math.Sin(freq*float64(n)))
 		freq += 0.000002
 
@@ -86,7 +86,7 @@ func TestWriteRead_Sample(t *testing.T) {
 
 	var s = make([]byte, 2)
 	// one second
-	for n := 0; n < rate; n += 1 {
+	for n := 0; n < rate; n++ {
 		y := int32(0.8 * math.Pow(2, bits-1) * math.Sin(freq*float64(n)))
 		freq += 0.000002
 

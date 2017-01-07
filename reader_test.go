@@ -68,6 +68,9 @@ func TestParseHeaders_complete(t *testing.T) {
 		SampleRate:      44100,
 		Channels:        1,
 		SignificantBits: 16,
+		AudioFormat:     1,
+		Canonical:       true,
+		BytesPerSecond:  88200,
 	}, wavReader.GetFile())
 }
 
