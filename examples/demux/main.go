@@ -98,6 +98,7 @@ func checkErr(err error) {
 }
 
 func dump(v interface{}) string {
-	b, _ := json.MarshalIndent(v, "", "  ")
+	b, err := json.MarshalIndent(v, "", "  ")
+	checkErr(err)
 	return string(b)
 }

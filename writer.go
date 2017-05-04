@@ -81,17 +81,24 @@ func (file File) NewWriter(out output) (wr *Writer, err error) {
 	return
 }
 
+// WriteInt16 writes the sample to the file using the binary package
+func (w *Writer) WriteInt16(sample int16) error {
+	return w.writeInt(sample, 2)
+}
+
 // WriteInt32 writes the sample to the file using the binary package
 func (w *Writer) WriteInt32(sample int32) error {
+	return w.writeInt(sample, 4)
+}
+
+func (w *Writer) writeInt(sample interface{}, bytes uint) error {
 	err := binary.Write(w.sampleBuf, binary.LittleEndian, sample)
 	if err != nil {
 		return err
 	}
-
 	w.samplesWritten++
-	w.bytesWritten += 4
-
-	return err
+	w.bytesWritten += int(bytes)
+	return nil
 }
 
 // WriteSample writes a []byte array to file without conversion
