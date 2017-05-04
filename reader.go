@@ -255,11 +255,11 @@ func (wav *Reader) ReadSample() (n int32, err error) {
 	case 1:
 		n = int32(s[0])
 	case 2:
-		n = int32(s[0]) + int32(s[1])<<8
+		n = int32(int16(s[0]) + int16(s[1])<<8)
 	case 3:
-		n = int32(s[0]) + int32(s[1])<<8 + int32(s[2])<<16
+		n = int32(int16(s[0]) + int16(s[1])<<8 + int16(s[2])<<16)
 	case 4:
-		n = int32(s[0]) + int32(s[1])<<8 + int32(s[2])<<16 + int32(s[3])<<24
+		n = int32(int16(s[0]) + int16(s[1])<<8 + int16(s[2])<<16 + int16(s[3])<<24)
 	default:
 		n = 0
 		err = fmt.Errorf("Unhandled bytesPerSample! b:%d", wav.bytesPerSample)
