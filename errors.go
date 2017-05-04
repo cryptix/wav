@@ -16,7 +16,7 @@ var (
 	// ErrBrokenChunkFmt error
 	ErrBrokenChunkFmt = errors.New("could not decode chunkFmt")
 	// ErrNoBitsPerSample error
-	ErrNoBitsPerSample = errors.New("could not decode chunkFmt")
+	ErrNoBitsPerSample = errors.New("bitsPerSample is zero")
 	// ErrFormatNotSupported error
 	ErrFormatNotSupported = errors.New("Format not supported - Only uncompressed PCM currently")
 )

@@ -256,5 +256,5 @@ func TestReadFuzzed_panic2(t *testing.T) {
 	wavFile := strings.NewReader("RIFF%\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00000000000000\a\x00data00000")
 	_, err := NewReader(wavFile, int64(wavFile.Len()))
 	is.Err(err)
-	is.Equal(ErrBrokenChunkFmt, err)
+	is.Equal(ErrNoBitsPerSample, err)
 }
