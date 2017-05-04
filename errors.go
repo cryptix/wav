@@ -6,18 +6,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Some static error values
 var (
-	// ErrInputToLarge error
-	ErrInputToLarge = errors.New("Input too large")
-	// ErrNotRiff error
-	ErrNotRiff = errors.New("Not a RIFF file")
-	// ErrNotWave error
-	ErrNotWave = errors.New("Not a WAVE file")
-	// ErrBrokenChunkFmt error
-	ErrBrokenChunkFmt = errors.New("could not decode chunkFmt")
-	// ErrNoBitsPerSample error
-	ErrNoBitsPerSample = errors.New("bitsPerSample is zero")
-	// ErrFormatNotSupported error
+	ErrInputToLarge       = errors.New("Input too large")
+	ErrNotRiff            = errors.New("Not a RIFF file")
+	ErrNotWave            = errors.New("Not a WAVE file")
+	ErrBrokenChunkFmt     = errors.New("could not decode chunkFmt")
+	ErrNoBitsPerSample    = errors.New("bitsPerSample is zero")
 	ErrFormatNotSupported = errors.New("Format not supported - Only uncompressed PCM currently")
 )
 
