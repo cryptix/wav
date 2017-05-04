@@ -7,6 +7,8 @@ import (
 	"os"
 	"sort"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Reader wraps WAV stream
@@ -125,7 +127,6 @@ readLoop:
 			wav.dataBlocSize = uint32(chunkSize)
 			break readLoop
 		default:
-			//fmt.Fprintf(os.Stderr, "Skip unused chunk \"%s\" (%d bytes).\n", chunk, chunkSize)
 			wav.extraChunk = true
 			if _, err = wav.input.Seek(int64(chunkSize), os.SEEK_CUR); err != nil {
 				return err
@@ -236,7 +237,7 @@ func (wav *Reader) ReadRawSample() ([]byte, error) {
 	}
 
 	if n != int(wav.bytesPerSample) {
-		return nil, fmt.Errorf("Read %d bytes, should have read %d", n, wav.bytesPerSample)
+		return nil, errors.Errorf("Read %d bytes, should have read %d", n, wav.bytesPerSample)
 	}
 
 	wav.samplesRead++
@@ -262,7 +263,7 @@ func (wav *Reader) ReadSample() (n int32, err error) {
 		n = int32(int16(s[0]) + int16(s[1])<<8 + int16(s[2])<<16 + int16(s[3])<<24)
 	default:
 		n = 0
-		err = fmt.Errorf("Unhandled bytesPerSample! b:%d", wav.bytesPerSample)
+		err = errors.Errorf("Unhandled bytesPerSample! b:%d", wav.bytesPerSample)
 	}
 
 	return

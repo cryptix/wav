@@ -1,8 +1,9 @@
 package wav
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 var (
