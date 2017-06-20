@@ -203,7 +203,7 @@ func (wav Reader) FirstSampleOffset() uint32 {
 }
 
 // Reset the wavReader
-func (wav Reader) Reset() (err error) {
+func (wav *Reader) Reset() (err error) {
 	_, err = wav.input.Seek(int64(wav.firstSamplePos), os.SEEK_SET)
 	if err == nil {
 		wav.samplesRead = 0
