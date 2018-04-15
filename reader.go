@@ -182,6 +182,37 @@ func (wav *Reader) GetSampleCount() uint32 {
 	return wav.numSamples
 }
 
+// GetAudioFormat returns the audio format. A value of 1 indicates uncompressed PCM.
+// Any other value indicates a compressed format
+func (wav *Reader) GetAudioFormat() uint16 {
+	return wav.chunkFmt.AudioFormat
+}
+
+// GetNumChannels returns the number of audio channels
+func (wav *Reader) GetNumChannels() uint16 {
+	return wav.chunkFmt.NumChannels
+}
+
+// GetSampleRate returns the sample rate
+func (wav *Reader) GetSampleRate() uint32 {
+	return wav.chunkFmt.SampleRate
+}
+
+// GetBitsPerSample returns the number of bits per sample
+func (wav *Reader) GetBitsPerSample() uint16 {
+	return wav.chunkFmt.BitsPerSample
+}
+
+// GetBytesPerSec returns the number of bytes per second of audio. ie: byte rate
+func (wav *Reader) GetBytesPerSec() uint32 {
+	return wav.chunkFmt.BytesPerSec
+}
+
+// GetDuration returns the length of audio
+func (wav *Reader) GetDuration() time.Duration {
+	return wav.duration
+}
+
 // GetFile returns File
 func (wav Reader) GetFile() File {
 	return File{
