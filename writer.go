@@ -25,7 +25,7 @@ type Writer struct {
 
 // NewWriter creates a new WaveWriter and writes the header to it
 func (file File) NewWriter(out output) (wr *Writer, err error) {
-	if file.Channels != 1 {
+	if file.Channels < 0 || file.Channels > 2 {
 		err = fmt.Errorf("sorry, only mono currently")
 		return
 	}
