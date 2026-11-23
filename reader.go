@@ -157,14 +157,9 @@ func (wav *Reader) parseChunkFmt() (err error) {
 		return err
 	}
 
-	if wav.canonical == false {
-		var extraparams uint32
-		// Get extra params size
-		if err = binary.Read(wav.input, binary.LittleEndian, &extraparams); err != nil {
-			return err
-		}
-		// Skip them
-		if _, err = wav.input.Seek(int64(extraparams), os.SEEK_CUR); err != nil {
+	// Skip the rest of the fmt chunk (cbSize and any extension) by its size
+	if n := wav.chunkFmt.LengthOfHeader; n > 16 {
+		if _, err = wav.input.Seek(int64(n-16+n%2), io.SeekCurrent); err != nil {
 			return err
 		}
 	}

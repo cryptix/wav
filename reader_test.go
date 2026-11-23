@@ -187,6 +187,21 @@ func TestParseHeaders_fmtNotSupported(t *testing.T) {
 	is.Equal(ErrFormatNotSupported, err)
 }
 
+func TestParseHeaders_fmtChunk18(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	// PCM, mono, 8000 Hz, 16 bits, 18-byte fmt chunk (cbSize = 0), one sample (1000)
+	wavData := []byte("RIFF\x28\x00\x00\x00WAVE" +
+		"fmt \x12\x00\x00\x00\x01\x00\x01\x00\x40\x1f\x00\x00\x80\x3e\x00\x00\x02\x00\x10\x00\x00\x00" +
+		"data\x02\x00\x00\x00\xe8\x03")
+	wavReader, err := NewReader(bytes.NewReader(wavData), int64(len(wavData)))
+	is.NoErr(err)
+	is.Equal(uint32(1), wavReader.GetSampleCount())
+	sample, err := wavReader.ReadSample()
+	is.NoErr(err)
+	is.Equal(1000, sample)
+}
+
 func TestReadSample_Raw(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
