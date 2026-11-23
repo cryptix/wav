@@ -11,7 +11,13 @@ var (
 	tokenWaveFormat = [4]byte{'W', 'A', 'V', 'E'}
 	tokenChunkFmt   = [4]byte{'f', 'm', 't', ' '}
 	tokenData       = [4]byte{'d', 'a', 't', 'a'}
+
+	// SubFormat GUID of WAVE_FORMAT_EXTENSIBLE for uncompressed PCM
+	subFormatPCM = []byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}
 )
+
+// WAVE_FORMAT_EXTENSIBLE
+const formatExtensible = 0xfffe
 
 // File describes the WAV file
 type File struct {

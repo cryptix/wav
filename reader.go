@@ -1,6 +1,7 @@
 package wav
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -157,20 +158,28 @@ func (wav *Reader) parseChunkFmt() (err error) {
 		return err
 	}
 
-	if wav.canonical == false {
-		var extraparams uint32
-		// Get extra params size
-		if err = binary.Read(wav.input, binary.LittleEndian, &extraparams); err != nil {
-			return err
+	format := wav.chunkFmt.AudioFormat
+	if n := int64(wav.chunkFmt.LengthOfHeader); n > 16 {
+		skip := n - 16 + n%2
+		if format == formatExtensible && n >= 40 {
+			// cbSize, wValidBitsPerSample, dwChannelMask and SubFormat
+			var ext [24]byte
+			if _, err = io.ReadFull(wav.input, ext[:]); err != nil {
+				return err
+			}
+			if bytes.Equal(ext[8:], subFormatPCM) {
+				format = 1
+			}
+			skip -= int64(len(ext))
 		}
-		// Skip them
-		if _, err = wav.input.Seek(int64(extraparams), os.SEEK_CUR); err != nil {
+		// Skip the rest of the fmt chunk (cbSize and any extension) by its size
+		if _, err = wav.input.Seek(skip, io.SeekCurrent); err != nil {
 			return err
 		}
 	}
 
 	// Is audio supported ?
-	if wav.chunkFmt.AudioFormat != 1 {
+	if format != 1 {
 		return ErrFormatNotSupported
 	}
 
