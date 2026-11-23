@@ -211,6 +211,31 @@ func TestReadSample(t *testing.T) {
 	is.Equal(257, sample)
 }
 
+func TestReadRawSample_EOF(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	files := []string{
+		// PCM, mono, 8000 Hz, 24 bits, one sample (3 bytes of data), then the pad byte
+		"RIFF\x28\x00\x00\x00WAVE" +
+			"fmt \x10\x00\x00\x00\x01\x00\x01\x00\x40\x1f\x00\x00\xc0\x5d\x00\x00\x03\x00\x18\x00" +
+			"data\x03\x00\x00\x00\x01\x02\x03\x00",
+		// PCM, mono, 8000 Hz, 16 bits, one sample, then a LIST chunk
+		"RIFF\x3e\x00\x00\x00WAVE" +
+			"fmt \x10\x00\x00\x00\x01\x00\x01\x00\x40\x1f\x00\x00\x80\x3e\x00\x00\x02\x00\x10\x00" +
+			"data\x02\x00\x00\x00\xe8\x03" +
+			"LIST\x10\x00\x00\x00INFOISFT\x04\x00\x00\x00go\x00\x00",
+	}
+	for _, f := range files {
+		wavReader, err := NewReader(strings.NewReader(f), int64(len(f)))
+		is.NoErr(err)
+		is.Equal(uint32(1), wavReader.GetSampleCount())
+		_, err = wavReader.ReadRawSample()
+		is.NoErr(err)
+		_, err = wavReader.ReadRawSample()
+		is.Equal(io.EOF, err)
+	}
+}
+
 // panic: runtime error: invalid memory address or nil pointer dereference
 // [signal 0xb code=0x1 addr=0x4 pc=0x4399fb]
 //

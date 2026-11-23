@@ -256,7 +256,7 @@ func (wav Reader) GetDumbReader() (r io.Reader, err error) {
 
 // ReadRawSample returns the raw []byte slice
 func (wav *Reader) ReadRawSample() ([]byte, error) {
-	if wav.samplesRead > wav.numSamples {
+	if wav.samplesRead >= wav.numSamples {
 		return nil, io.EOF
 	}
 
